@@ -8,27 +8,27 @@ pipeline {
     stages {
         stage("Compile") {
             steps {
-             bat "./gradlew compileJava"
+                bat "gradlew compileJava"
             }
         }
 
         stage("Unit test") {
             steps {
-             bat "./gradlew test"
+                bat "gradlew test"
             }
         }
 
         stage("Code coverage") {
             steps {
-             bat "./gradlew jacocoTestReport"
-             bat "./gradlew jacocoTestCoverageVerification"
+                bat "gradlew jacocoTestReport"
+                bat "gradlew jacocoTestCoverageVerification"
             }
         }
 
         stage("Static code analysis") {
             steps {
-             bat "./gradlew checkstyleMain"
-             bat "./gradlew checkstyleTest"
+                bat "gradlew checkstyleMain"
+                bat "gradlew checkstyleTest"
             }
         }
 
@@ -46,13 +46,13 @@ pipeline {
 
         stage("Package") {
             steps {
-             bat "./gradlew build"
+                bat "gradlew build"
             }
         }
 
         stage("Docker build") {
             steps {
-             bat "docker build -t leszko/calculator:${BUILD_TIMESTAMP} ."
+                bat "docker build -t leszko/calculator:${BUILD_TIMESTAMP} ."
             }
         }
 
@@ -60,50 +60,50 @@ pipeline {
             steps {
                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'docker-hub-credentials',
                           usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-                 bat "docker login --username $USERNAME --password $PASSWORD"
+                    bat "docker login --username $USERNAME --password $PASSWORD"
                 }
             }
         }
 
         stage("Docker push") {
             steps {
-             bat "docker push leszko/calculator:${BUILD_TIMESTAMP}"
+                bat "docker push leszko/calculator:${BUILD_TIMESTAMP}"
             }
         }
 
         stage("Update version") {
             steps {
-             bat "sed -i 's/{{VERSION}}/${BUILD_TIMESTAMP}/g' calculator.yaml"
+                bat "sed -i 's/{{VERSION}}/${BUILD_TIMESTAMP}/g' calculator.yaml"
             }
         }
 
         stage("Deploy to staging") {
             steps {
-             bat "kubectl config use-context staging"
-             bat "kubectl apply -f hazelcast.yaml"
-             bat "kubectl apply -f calculator.yaml"
+                bat "kubectl config use-context staging"
+                bat "kubectl apply -f hazelcast.yaml"
+                bat "kubectl apply -f calculator.yaml"
             }
         }
 
         stage("Acceptance test") {
             steps {
                 sleep 60
-             bat "chmod +x acceptance-test.sh && ./acceptance-test.sh"
+                bat "chmod +x acceptance-test.sh && ./acceptance-test.sh"
             }
         }
 
         stage("Release") {
             steps {
-             bat "kubectl config use-context production"
-             bat "kubectl apply -f hazelcast.yaml"
-             bat "kubectl apply -f calculator.yaml"
+                bat "kubectl config use-context production"
+                bat "kubectl apply -f hazelcast.yaml"
+                bat "kubectl apply -f calculator.yaml"
             }
         }
 
         stage("Smoke test") {
             steps {
                 sleep 60
-             bat "chmod +x smoke-test.sh && ./smoke-test.sh"
+                bat "chmod +x smoke-test.sh && ./smoke-test.sh"
             }
         }
     }
